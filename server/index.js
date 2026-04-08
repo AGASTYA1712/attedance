@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
@@ -13,6 +14,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the React frontend app
+app.use(express.static(path.join(__dirname, '../dist')));
 
 // MySQL Pool
 const pool = mysql.createPool(process.env.DATABASE_URL);
@@ -118,6 +122,16 @@ app.patch('/api/requests/:id', authenticateToken, isAdmin, async (req, res) => {
     console.error(error);
     res.status(400).json({ message: 'Failed to update request' });
   }
+});
+
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+app.use((req, res) => {
+  const indexPath = path.resolve(__dirname, '..', 'dist', 'index.html');
+  console.log(`Catch-all for: ${req.url} -> serving ${indexPath}`);
+  res.sendFile(indexPath);
 });
 
 app.listen(PORT, () => {
